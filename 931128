@@ -1,0 +1,134 @@
+local TweenService = game:GetService("TweenService")
+
+-- Create click sound
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://541909867"
+clickSound.Volume = 1
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 400, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local topbarHeight = 40
+local originalSize = mainFrame.Size
+
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+
+-- Topbar
+local topBar = Instance.new("Frame", mainFrame)
+topBar.Size = UDim2.new(1, 0, 0, topbarHeight)
+topBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+topBar.Name = "TopBar"
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 12)
+
+-- Title
+local titleLabel = Instance.new("TextLabel", topBar)
+titleLabel.Size = UDim2.new(1, -80, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Custom UI"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 16
+
+-- Close Button
+local closeButton = Instance.new("TextButton", topBar)
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.Gotham
+closeButton.TextSize = 14
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 8)
+
+-- Minimize Button
+local minimizeButton = Instance.new("TextButton", topBar)
+minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+minimizeButton.Position = UDim2.new(1, -70, 0, 5)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minimizeButton.Text = "_"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.Font = Enum.Font.Gotham
+minimizeButton.TextSize = 14
+Instance.new("UICorner", minimizeButton).CornerRadius = UDim.new(0, 8)
+
+-- Sidebar
+local sidebar = Instance.new("Frame", mainFrame)
+sidebar.Size = UDim2.new(0, 100, 1, -topbarHeight)
+sidebar.Position = UDim2.new(0, 0, 0, topbarHeight)
+sidebar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+
+-- Content container
+local contentContainer = Instance.new("Frame", mainFrame)
+contentContainer.Size = UDim2.new(1, -100, 1, -topbarHeight)
+contentContainer.Position = UDim2.new(0, 100, 0, topbarHeight)
+contentContainer.BackgroundTransparency = 1
+
+-- Tabs system
+local tabs = {}
+
+function createTab(name)
+    local tabButton = Instance.new("TextButton", sidebar)
+    tabButton.Size = UDim2.new(1, 0, 0, 30)
+    tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    tabButton.Text = name
+    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabButton.Font = Enum.Font.Gotham
+    tabButton.TextSize = 14
+    Instance.new("UICorner", tabButton).CornerRadius = UDim.new(0, 6)
+
+    local contentFrame = Instance.new("Frame", contentContainer)
+    contentFrame.Size = UDim2.new(1, 0, 1, 0)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Visible = false
+
+    tabs[name] = {button = tabButton, frame = contentFrame}
+
+    tabButton.MouseButton1Click:Connect(function()
+        clickSound:Play()
+        for _, t in pairs(tabs) do
+            t.frame.Visible = false
+        end
+        contentFrame.Visible = true
+    end)
+
+    return contentFrame
+end
+
+-- Expose globally
+getgenv().createTab = createTab
+
+-- Click sound
+clickSound.Parent = screenGui
+
+-- Close
+closeButton.MouseButton1Click:Connect(function()
+    clickSound:Play()
+    screenGui:Destroy()
+end)
+
+-- Minimize
+local minimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    clickSound:Play()
+    minimized = not minimized
+    local goalSize = minimized and UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, topbarHeight) or originalSize
+    local tween = TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = goalSize})
+    tween:Play()
+    contentContainer.Visible = not minimized
+    sidebar.Visible = not minimized
+end)
